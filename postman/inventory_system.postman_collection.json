@@ -1,0 +1,367 @@
+{
+  "info": {
+    "_postman_id": "a5d8b76f-3c82-4912-b5e1-84e5902198cd",
+    "name": "Inventory Management System API",
+    "description": "Koleksi Postman resmi untuk Inventory Management System (IMS) backend Rust (Axum, SQLx, PostgreSQL).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sampleWarehouseId",
+      "value": "99aa88bb-1111-2222-3333-444455556666",
+      "type": "string"
+    },
+    {
+      "key": "sampleVariantId",
+      "value": "77bb88cc-3333-4444-5555-666677778888",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health & Diagnostics",
+      "item": [
+        {
+          "name": "Liveness Probe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/live",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "live"]
+            },
+            "description": "Memeriksa apakah instance server Rust sedang aktif (UP)."
+          },
+          "response": []
+        },
+        {
+          "name": "Readiness Probe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/ready",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "ready"]
+            },
+            "description": "Memeriksa ketersediaan koneksi database pool PostgreSQL."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@inventory.local\",\n  \"password\": \"SecureAdmin123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Autentikasi kredensial pengguna dan mengembalikan JWT access token."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "me"]
+            },
+            "description": "Mengambil info akun dan role pengguna yang sedang login."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Inventory & Stocks",
+      "item": [
+        {
+          "name": "Get All Inventory List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inventory"]
+            },
+            "description": "Mengambil daftar seluruh saldo inventaris di semua gudang."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Low Stock Items Only",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory?low_stock_only=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inventory"],
+              "query": [
+                {
+                  "key": "low_stock_only",
+                  "value": "true",
+                  "description": "Hanya tampilkan stok yang berada di bawah ambang batas minimum (min_threshold)"
+                }
+              ]
+            },
+            "description": "Filter item yang membutuhkan pengadaan ulang (restock alert)."
+          },
+          "response": []
+        },
+        {
+          "name": "Filter Inventory by Warehouse",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory?warehouse_id={{sampleWarehouseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inventory"],
+              "query": [
+                {
+                  "key": "warehouse_id",
+                  "value": "{{sampleWarehouseId}}",
+                  "description": "UUID gudang spesifik"
+                }
+              ]
+            },
+            "description": "Filter saldo inventaris pada satu gudang tertentu."
+          },
+          "response": []
+        },
+        {
+          "name": "Adjust Stock (Stock Opname)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"warehouse_id\": \"{{sampleWarehouseId}}\",\n  \"product_variant_id\": \"{{sampleVariantId}}\",\n  \"actual_quantity\": 120,\n  \"reason\": \"CYCLE_COUNT_ADJUSTMENT\",\n  \"notes\": \"Penyesuaian hasil stock opname fisik kuartal 4\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory/adjust",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inventory", "adjust"]
+            },
+            "description": "Menyesuaikan stok fisik dengan row-level lock (pessimistic lock) dan mencatat mutasi ledger."
+          },
+          "response": []
+        },
+        {
+          "name": "Transfer Stock Between Warehouses",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"source_warehouse_id\": \"{{sampleWarehouseId}}\",\n  \"destination_warehouse_id\": \"11bb22cc-4444-5555-6666-777788889999\",\n  \"items\": [\n    {\n      \"product_variant_id\": \"{{sampleVariantId}}\",\n      \"quantity\": 25\n    }\n  ],\n  \"notes\": \"Mutasi relokasi stok ke gudang cabang Surabaya\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory/transfer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inventory", "transfer"]
+            },
+            "description": "Memindahkan persediaan dari gudang asal ke gudang tujuan."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Stock Movements (Audit Ledger)",
+      "item": [
+        {
+          "name": "Get Stock Movements History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/stock-movements?warehouse_id={{sampleWarehouseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "stock-movements"],
+              "query": [
+                {
+                  "key": "warehouse_id",
+                  "value": "{{sampleWarehouseId}}",
+                  "description": "Filter berdasarkan ID gudang"
+                }
+              ]
+            },
+            "description": "Mengambil riwayat transaksi mutasi buku besar inventaris (append-only ledger)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Products & Catalog",
+      "item": [
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Mengambil katalog produk beserta varian aktif."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Product with Variants",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Baut Baja High-Tensile M8\",\n  \"category_id\": \"a1b2c3d4-0000-0000-0000-000000000001\",\n  \"description\": \"Baut baja hitam grade 8.8 DIN 933\",\n  \"uom\": \"PCS\",\n  \"variants\": [\n    {\n      \"sku\": \"BAUT-M8-30MM\",\n      \"barcode\": \"8991234567890\",\n      \"variant_name\": \"Panjang 30mm\",\n      \"cost_price\": 2500.00,\n      \"selling_price\": 4000.00\n    },\n    {\n      \"sku\": \"BAUT-M8-50MM\",\n      \"barcode\": \"8991234567891\",\n      \"variant_name\": \"Panjang 50mm\",\n      \"cost_price\": 3200.00,\n      \"selling_price\": 5500.00\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products"]
+            },
+            "description": "Membuat produk baru beserta daftar varian, SKU, dan harga."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Purchase Orders (Inbound)",
+      "item": [
+        {
+          "name": "List Purchase Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/purchase-orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "purchase-orders"]
+            },
+            "description": "Melihat daftar Purchase Order ke supplier."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Purchase Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supplier_id\": \"88aa99bb-2222-3333-4444-555566667777\",\n  \"warehouse_id\": \"{{sampleWarehouseId}}\",\n  \"items\": [\n    {\n      \"product_variant_id\": \"{{sampleVariantId}}\",\n      \"quantity_ordered\": 500,\n      \"unit_cost\": 2400.00\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/purchase-orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "purchase-orders"]
+            },
+            "description": "Menerbitkan Purchase Order baru ke pemasok."
+          },
+          "response": []
+        },
+        {
+          "name": "Receive Goods (Inbound PO)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"received_items\": [\n    {\n      \"product_variant_id\": \"{{sampleVariantId}}\",\n      \"quantity_received\": 500,\n      \"location_id\": \"cc334455-6677-8899-0011-223344556677\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/purchase-orders/{{sampleWarehouseId}}/receive",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "purchase-orders", "{{sampleWarehouseId}}", "receive"]
+            },
+            "description": "Mengonfirmasi penerimaan fisik barang dari PO, menambah saldo on-hand dan mencatat INBOUND_PO di ledger."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

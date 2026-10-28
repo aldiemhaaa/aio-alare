@@ -27,6 +27,7 @@ Dokumentasi proyek dibagi menjadi beberapa berkas modular berikut:
 | [**api.md**](./api.md) | Spesifikasi RESTful API, otentikasi JWT, format respons terstandar, dan daftar endpoint utama. |
 | [**domain-model.md**](./domain-model.md) | Pemodelan domain (DDD), *invariants* bisnis, *value objects*, dan contoh representasi idiomatik dalam Rust. |
 | [**development.md**](./development.md) | Panduan instalasi lokal, dependensi, konfigurasi Docker, migrasi database, dan pengujian (*testing*). |
+| [**Postman Collection**](../postman/inventory_system.postman_collection.json) | File koleksi Postman v2.1 siap pakai untuk uji coba seluruh endpoint API. |
 
 ---
 
